@@ -6,13 +6,13 @@ import (
 	"github.com/spf13/viper"
 )
 
-const Directory = "./config"
+const Directory = "/home/sergey/lamoda-test/config"
 
 func getConfigFile() []string {
 	return []string{"app-config"}
 }
 
-func main() {
+func Init() {
 	viper.AddConfigPath(Directory)
 
 	for _, filePath := range getConfigFile() {
@@ -22,4 +22,5 @@ func main() {
 			log.Fatal(err)
 		}
 	}
+	log.Println(viper.ConfigFileUsed())
 }

@@ -18,6 +18,7 @@ type PSQLConfig struct {
 const driverName = "postgres"
 
 func EstablishPSQLConnection(cnf *PSQLConfig) (*sql.DB, error) {
+	log.Println("Starting connection to db")
 	db, err := sql.Open(driverName, fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=%s",
 		cnf.Host, cnf.Port, cnf.Username, cnf.DBName, cnf.Password, cnf.SSLMode))
 	if err != nil {
