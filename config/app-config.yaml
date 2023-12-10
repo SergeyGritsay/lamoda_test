@@ -1,0 +1,11 @@
+db:
+  postgres:
+    host: "warehouse_db"
+    port: "5432"
+    password: "qwerty"
+    database: "warehouse"
+    user: "warehouse"
+    sslmode: "disable"
+
+app:
+  port: "3000"
