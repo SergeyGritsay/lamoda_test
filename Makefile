@@ -57,3 +57,7 @@ db-migrate-down: goose-init
 
 package-tidy:
 	go mod tidy
+
+goose-init:
+	go build -o .bin/goose cmd/${MIGRATION_TOOL}/main.go
+	chmod ugo+x .bin/${MIGRATION_TOOL}
