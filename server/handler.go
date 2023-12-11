@@ -128,7 +128,7 @@ func (s *Service) GetProductByCode(r *http.Request, args *ProductArgs, response 
 		return fmt.Errorf("error when getting good by id: %s", err)
 	}
 
-	response.Message = ("code: " + string(g.Code) + " name: " + g.Name + " size: " + strconv.FormatFloat(g.Size, 'f', 2, 64) + " value: " + string(g.Value))
+	response.Message = ("code: " + string(rune(g.Code)) + " name: " + g.Name + " size: " + strconv.FormatFloat(g.Size, 'f', 2, 64) + " value: " + string(rune(g.Value)))
 
 	return nil
 }
@@ -140,7 +140,7 @@ func (s *Service) GetProductssCountByWarehouseId(r *http.Request, args *ProductA
 		return fmt.Errorf("error when getting goods count by stock id: %s", err)
 	}
 
-	response.Message = string(count)
+	response.Message = string(rune(count))
 
 	return nil
 }
