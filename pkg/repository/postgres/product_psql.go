@@ -40,7 +40,7 @@ func (r *ProductPSQL) CreateNewProduct(name string, size int, value int) (int, e
 func (r *ProductPSQL) GetProduct(code int) (models.Product, error) {
 	var pr models.Product
 
-	query := fmt.Sprintf(`SELECT code, name, size, value FROM %s where id = $1`, productTableName)
+	query := fmt.Sprintf(`SELECT code, name, size, value FROM %s where code = $1`, productTableName)
 	row := r.conn.QueryRow(query, code)
 	err := row.Scan(&pr.Code, &pr.Name, &pr.Size, &pr.Value)
 

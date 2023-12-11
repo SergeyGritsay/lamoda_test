@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"lamoda_test_task/pkg/models"
 	"lamoda_test_task/pkg/repository"
+	"log"
 	"net/http"
 	"strconv"
 )
@@ -40,9 +41,11 @@ func (s *Service) CreateNewProduct(r *http.Request, args *CreateArgs, response *
 	newProduct := make([]models.Product, 0, len(args.Products))
 	productRepo := repository.NewRepository(s.db)
 	for _, gd := range args.Products {
-		if _, err := productRepo.CreateNewProduct(gd.Name, int(gd.Size), int(gd.Value)); err != nil {
+		id, err := productRepo.CreateNewProduct(gd.Name, int(gd.Size), int(gd.Value))
+		if err != nil {
 			return fmt.Errorf("error when creating a new good entity in db: %s", err)
 		}
+		log.Println("ID:", id)
 		newProduct = append(newProduct, gd)
 	}
 
