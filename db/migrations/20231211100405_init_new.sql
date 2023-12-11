@@ -16,11 +16,11 @@ CREATE TABLE IF NOT EXISTS product (
     stock_id int
 );
 
-CREATE TABLE IF NOT EXISTS res_cen (
+CREATE TABLE IF NOT EXISTS resever (
 	id serial PRIMARY KEY,
-	product_code int4 NULL,
-	stock_id uuid NOT NULL,
-	value int4 NULL
+	product_code int NULL,
+	stock_id int NOT NULL,
+	value int NULL
 );
 
 -- +goose StatementEnd
@@ -31,6 +31,6 @@ DROP TABLE PRODUCT;
 
 DROP TABLE warehouse;
 
-DROP TABLE res_cen;
+DROP TABLE resever;
 
 -- +goose StatementEnd

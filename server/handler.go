@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"lamoda_test_task/pkg/models"
 	"lamoda_test_task/pkg/repository"
-	"log"
 	"net/http"
 	"strconv"
 )
@@ -22,14 +21,14 @@ type ProductArgs struct {
 	Name    string
 	Size    float64
 	Value   int64
-	StockId string
+	StockId int
 	Dynamic bool
 	ResId   string
 }
 
 type WarehouseArgs struct {
 	Id        string
-	Nmae      string
+	Name      string
 	Available bool
 }
 
@@ -37,47 +36,36 @@ type Response struct {
 	Message string
 }
 
-func (s *Service) CreateNewProduct(r *http.Request, args *CreateArgs, response *Response) error {
-	newProduct := make([]models.Product, 0, len(args.Products))
+func (s *Service) CreateNewProduct(r *http.Request, args *ProductArgs, response *Response) error {
 	productRepo := repository.NewRepository(s.db)
-	for _, gd := range args.Products {
-		id, err := productRepo.CreateNewProduct(gd.Name, int(gd.Size), int(gd.Value))
-		if err != nil {
-			return fmt.Errorf("error when creating a new good entity in db: %s", err)
-		}
-		log.Println("ID:", id)
-		newProduct = append(newProduct, gd)
+
+	id, err := productRepo.CreateNewProduct(args.Name, args.Size, int(args.Value), args.StockId)
+	if err != nil {
+		return fmt.Errorf("error when creating a new good entity in db: %s", err)
 	}
 
-	var resp string = "the following entities have been created: "
-	for _, v := range newProduct {
-		resp = resp + v.Name + " "
-	}
+	var resp string = "the following entities have been created: " + strconv.Itoa(id) + " " + args.Name
 
 	response.Message = resp
 	return nil
 }
 
-func (s *Service) CreateNewWarehouse(r *http.Request, args *CreateArgs, response *Response) error {
-	newWarehouse := make([]models.Warehouse, 0, len(args.Warehosue))
+func (s *Service) CreateNewWarehouse(r *http.Request, args *WarehouseArgs, response *Response) error {
 	productRepo := repository.NewRepository(s.db)
-	for _, st := range args.Warehosue {
-		if _, err := productRepo.CreateNewWarehouse(st); err != nil {
-			return fmt.Errorf("error when creating a new stock entity in db: %s", err)
-		}
-		newWarehouse = append(newWarehouse, st)
+	id, err := productRepo.CreateNewWarehouse(args.Name, args.Available)
+	if err != nil {
+		return fmt.Errorf("error when creating a new stock entity in db: %s", err)
 	}
 
 	var resp string = "the following entities have been created: "
-	for _, v := range newWarehouse {
-		resp = resp + v.Name + " "
-	}
+	resp = resp + " " + strconv.Itoa(id) + args.Name + " "
 
 	response.Message = resp
 	return nil
 }
 
 func (s *Service) AddProduct(r *http.Request, args *ProductArgs, response *Response) error {
+	fmt.Print(args)
 	productRepo := repository.NewRepository(s.db)
 	if err := productRepo.AddProduct(args.Code, args.StockId, args.Value, args.Dynamic); err != nil {
 		return fmt.Errorf("error when adding: %s", err)
@@ -116,7 +104,7 @@ func (s *Service) GetAllProducts(r *http.Request, args *DefaultArgs, response *R
 
 	var resp string = "all goods: "
 	for _, v := range goods {
-		resp = resp + v.Name
+		resp = resp + " " + strconv.Itoa(int(v.Code)) + " " + v.Name + " " + fmt.Sprintf("%.6f", v.Size) + " " + strconv.Itoa(int(v.Value)) + " " + strconv.Itoa(v.StockId) + "\n"
 	}
 
 	response.Message = resp

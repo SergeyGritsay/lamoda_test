@@ -7,21 +7,21 @@ import (
 )
 
 type WarehosueRepository interface {
-	CreateNewWarehouse(s models.Warehouse) (int, error)
+	CreateNewWarehouse(name string, available bool) (int, error)
 	GetWarehouse(id int) (models.Warehouse, error)
 	GetWarehouseList() ([]models.Warehouse, error)
 }
 
 type ProductRepository interface {
-	CreateNewProduct(name string, size int, value int) (int, error)
-	GetProductsCountByWarehouseId(stockId string, code int) (int64, error)
+	CreateNewProduct(name string, size float64, value int, stock_id int) (int, error)
+	GetProductsCountByWarehouseId(stockId int, code int) (int64, error)
 
 	GetProductList() ([]models.Product, error)
 	GetProduct(code int) (models.Product, error)
 
-	ReservationProduct(code int, stockId string, value int64) error
+	ReservationProduct(code int, stockId int, value int64) error
 	CancelProductReservation(resId string) error
-	AddProduct(code int, stockId string, value int64, dynamic bool) error
+	AddProduct(code int, stockId int, value int64, dynamic bool) error
 }
 type Repository struct {
 	WarehosueRepository
