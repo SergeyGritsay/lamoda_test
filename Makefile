@@ -8,7 +8,7 @@ DOCKER_PATH := ${PROJ_PATH}/docker
 
 APP=lamoda-test
 MIGRATION_TOOL=goose
-MIGRATION_DIR=${PROJ_PATH}/db/migrations
+MIGRATION_DIR=./db/migrations
 
 BASIC_IMAGE=dep
 
@@ -27,7 +27,8 @@ app-up: build
 
 all: app-setup-and-up
 
-app-bash: docker-compose run --rm --no-deps --name ${APP}-service ${APP} ash
+app-bash: 
+	docker-compose run --rm --no-deps --name ${APP}-service warehouse ash
 
 app-up-local: build	
 	./.bin/lamoda-test
@@ -48,7 +49,7 @@ db-migrate-status: goose-init
 		"user=${POSTGRES_USER} host=${POSTGRES_HOST} port=${POSTGRES_PORT} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} sslmode=${POSTGRES_SSL}" status
 
 db-migrate-up: goose-init
-	docker-compose run --rm ${APP} .bin/goose -dir ${MIGRATION_DIR} postgres \
+	docker-compose run --rm postgres .bin/goose -dir ${MIGRATION_DIR} postgres \
 		"user=${POSTGRES_USER} host=${POSTGRES_HOST} port=${POSTGRES_PORT} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} sslmode=${POSTGRES_SSL}" up
 
 db-migrate-down: goose-init
@@ -61,3 +62,9 @@ package-tidy:
 goose-init:
 	go build -o .bin/goose cmd/${MIGRATION_TOOL}/main.go
 	chmod ugo+x .bin/${MIGRATION_TOOL}
+
+db-up:
+	docker-compose run --rm --no-deps --name ${APP}-db db ash
+
+up_migrate:
+	migrate -path .db/migrations -database 'postgres://postgres:qwerty@localhost:5432/warehouse?sslmode=disable' up

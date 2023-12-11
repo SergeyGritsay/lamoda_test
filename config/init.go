@@ -6,7 +6,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const Directory = "/home/sergey/lamoda-test/config"
+const Directory = "./config"
 
 func getConfigFile() []string {
 	return []string{"app-config"}

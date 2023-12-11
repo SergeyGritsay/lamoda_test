@@ -1,7 +1,6 @@
 package server
 
 import (
-	"context"
 	"database/sql"
 	"log"
 	"net/http"
@@ -11,28 +10,22 @@ import (
 )
 
 type Service struct {
-	ctx context.Context
-	db  *sql.DB
-	// log *logger.Logger
+	db *sql.DB
 }
 
-// func NewService(ctx context.Context, strg db.Storage, log *logger.Logger) *Service {
-func NewService(ctx context.Context, db *sql.DB) *Service {
+func NewService(db *sql.DB) *Service {
 	return &Service{
-		ctx: ctx,
-		db:  db,
-		// log: log,
+		db: db,
 	}
 }
 
-// func RunJRPC(ctx context.Context, strg db.Storage, log *logger.Logger) {
-func RunJRPC(ctx context.Context, db *sql.DB, port string) {
+func RunJRPC(db *sql.DB, port string) {
 	s := rpc.NewServer()
-	// log.Info("run server")
+	log.Println("run server")
 
 	s.RegisterCodec(json.NewCodec(), "application/json")
-	s.RegisterService(NewService(ctx, db), "") // Add db and logger
-	// log.Info("register service")
+	s.RegisterService(NewService(db), "")
+	log.Println("register service")
 
 	http.Handle("/rpc", s)
 
