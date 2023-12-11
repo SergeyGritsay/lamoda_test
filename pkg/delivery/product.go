@@ -1,4 +1,4 @@
-package server
+package delivery
 
 import (
 	"encoding/json"
@@ -42,9 +42,9 @@ type Response struct {
 	Message string
 }
 
-func (s *Service) CreateNewProduct(r *http.Request, args *ProductArgs, response *Response) error {
+func (h *Handler) CreateNewProduct(r *http.Request, args *ProductArgs, response *Response) error {
 
-	id, err := s.service.Product.CreateNewProduct(args.Name, args.Size, int(args.Value), args.StockId)
+	id, err := h.services.Product.CreateNewProduct(args.Name, args.Size, int(args.Value), args.StockId)
 	if err != nil {
 		return fmt.Errorf("error when creating a new good entity in db: %s", err)
 	}
@@ -55,9 +55,9 @@ func (s *Service) CreateNewProduct(r *http.Request, args *ProductArgs, response 
 	return nil
 }
 
-func (s *Service) CreateNewWarehouse(r *http.Request, args *WarehouseArgs, response *Response) error {
+func (h *Handler) CreateNewWarehouse(r *http.Request, args *WarehouseArgs, response *Response) error {
 	// productRepo := repository.NewRepository(s.db)
-	id, err := s.service.Warehouse.CreateNewWarehouse(args.Name, args.Available)
+	id, err := h.services.Warehouse.CreateNewWarehouse(args.Name, args.Available)
 	if err != nil {
 		return fmt.Errorf("error when creating a new stock entity in db: %s", err)
 	}
@@ -69,8 +69,8 @@ func (s *Service) CreateNewWarehouse(r *http.Request, args *WarehouseArgs, respo
 	return nil
 }
 
-func (s *Service) ReservationProduct(r *http.Request, args *ReservationArgs, response *Response) error {
-	if err := s.service.Product.ReservationProducts(args.Codes, args.StockId, args.Value); err != nil {
+func (h *Handler) ReservationProduct(r *http.Request, args *ReservationArgs, response *Response) error {
+	if err := h.services.Product.ReservationProducts(args.Codes, args.StockId, args.Value); err != nil {
 		return fmt.Errorf("error when reservation: %s", err)
 	}
 
@@ -78,8 +78,8 @@ func (s *Service) ReservationProduct(r *http.Request, args *ReservationArgs, res
 	return nil
 }
 
-func (s *Service) CancelProductReservation(r *http.Request, args *ProductArgs, response *Response) error {
-	if err := s.service.Product.CancelProductReservation(args.ResId); err != nil {
+func (h *Handler) CancelProductReservation(r *http.Request, args *ProductArgs, response *Response) error {
+	if err := h.services.Product.CancelProductReservation(args.ResId); err != nil {
 		return fmt.Errorf("error when cancel reservation: %s", err)
 	}
 
@@ -87,8 +87,8 @@ func (s *Service) CancelProductReservation(r *http.Request, args *ProductArgs, r
 	return nil
 }
 
-func (s *Service) GetAllProducts(r *http.Request, args *DefaultArgs, response *Response) error {
-	goods, err := s.service.Product.GetProductList()
+func (h *Handler) GetAllProducts(r *http.Request, args *DefaultArgs, response *Response) error {
+	goods, err := h.services.Product.GetProductList()
 	if err != nil {
 		return fmt.Errorf("error when getting all goods: %s", err)
 	}
@@ -103,8 +103,8 @@ func (s *Service) GetAllProducts(r *http.Request, args *DefaultArgs, response *R
 	return nil
 }
 
-func (s *Service) GetProductByCode(r *http.Request, args *ProductArgs, response *Response) error {
-	product, err := s.service.Product.GetProductByCode(args.Code)
+func (h *Handler) GetProductByCode(r *http.Request, args *ProductArgs, response *Response) error {
+	product, err := h.services.Product.GetProductByCode(args.Code)
 	if err != nil {
 		return fmt.Errorf("error when getting good by id: %s", err)
 	}
@@ -114,8 +114,8 @@ func (s *Service) GetProductByCode(r *http.Request, args *ProductArgs, response 
 	return nil
 }
 
-func (s *Service) GetProductssCountByWarehouseId(r *http.Request, args *ProductArgs, response *Response) error {
-	count, err := s.service.Product.GetProductsCountByWarehouseId(args.StockId, args.Code)
+func (h *Handler) GetProductssCountByWarehouseId(r *http.Request, args *ProductArgs, response *Response) error {
+	count, err := h.services.Product.GetProductsCountByWarehouseId(args.StockId, args.Code)
 	if err != nil {
 		return fmt.Errorf("error when getting goods count by stock id: %s", err)
 	}

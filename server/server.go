@@ -1,8 +1,9 @@
 package server
 
 import (
-	"context"
 	"database/sql"
+	"lamoda_test_task/pkg/repository"
+	"lamoda_test_task/pkg/services"
 	"log"
 	"net/http"
 
@@ -11,23 +12,24 @@ import (
 )
 
 type Service struct {
-	db  *sql.DB
-	ctx context.Context
+	service *services.Service
+	// ctx context.Context
 }
 
-func NewService(db *sql.DB, ctx context.Context) *Service {
+func NewService(service *services.Service) *Service {
 	return &Service{
-		db:  db,
-		ctx: ctx,
+		service: service,
 	}
 }
 
 func RunJRPC(db *sql.DB, port string) {
 	s := rpc.NewServer()
 	log.Println("run server")
-	ctx := context.Background()
+	// ctx := context.Background()
+	// services := NewService(delivery.NewHandler(services.NewService(repository.NewRepository(db))))
+	// ProductService := delivery.NewHandler(services.NewService(repository.NewRepository(services.db)))
 	s.RegisterCodec(json.NewCodec(), "application/json")
-	s.RegisterService(NewService(db, ctx), "")
+	s.RegisterService(NewService(services.NewService(repository.NewRepository(db))), "")
 	log.Println("register service")
 
 	http.Handle("/rpc", s)
