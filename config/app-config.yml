@@ -1,6 +1,6 @@
 db:
   postgres:
-    host: "warehouse_db"
+    host: "postgres"
     port: "5432"
     password: "qwerty"
     database: "warehouse"
@@ -8,4 +8,4 @@ db:
     sslmode: "disable"
 
 app:
-  port: "3000"
+  port: "4000"

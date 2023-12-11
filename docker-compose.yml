@@ -4,15 +4,18 @@ services:
   warehouse:
     image: lamoda-test-image
     volumes:
-      - .:/lamoda-test:cached
+      - .:/lamoda-test
     ports:
-      - 3000:3000
+      - 4000:4000
     depends_on:
-      - db
+      - postgres
+    networks:
+      - learning
 
-  db:
+
+  postgres:
     restart: always
-    container_name: warehouse-db
+    container_name: postgres
     image: postgres:15-alpine
     volumes:
       - ./.database/postgres/data:/var/lib/postgresql/data
@@ -21,4 +24,10 @@ services:
       - POSTGRES_USER=${POSTGRES_USER}
       - POSTGRES_DB=${POSTGRES_DB}
     ports:
-      - 5432:5433
+      - 5432:5432
+    networks:
+      - learning
+
+networks:
+  learning:
+    driver: bridge

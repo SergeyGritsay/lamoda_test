@@ -1,7 +1,6 @@
 package main
 
 import (
-	"context"
 	"lamoda_test_task/config"
 	"lamoda_test_task/pkg/repository/postgres"
 	"lamoda_test_task/server"
@@ -29,8 +28,6 @@ func main() {
 	}
 	log.Println("DB connection establish")
 
-	ctx := context.Background()
-	log.Println("Server listing on port :3000")
-
-	server.RunJRPC(ctx, conn, "3000")
+	log.Printf("Server listing on port: %s", viper.GetString("app.port"))
+	server.RunJRPC(conn, viper.GetString("app.port"))
 }
