@@ -9,6 +9,7 @@ import (
 )
 
 const productTableName = "product"
+const reserveTableName = "reserver"
 
 type ProductPSQL struct {
 	conn *sql.DB
@@ -18,16 +19,16 @@ func NewProductPSQL(conn *sql.DB) *ProductPSQL {
 	return &ProductPSQL{conn: conn}
 }
 
-func (r *ProductPSQL) CreateNewProduct(name string, size int, value int) (int, error) {
+func (r *ProductPSQL) CreateNewProduct(name string, size float64, value int, stock_id int) (int, error) {
 	tx, err := r.conn.Begin()
 	if err != nil {
 		return 0, err
 	}
 
 	var productId int
-	createItemQuery := fmt.Sprintf("INSERT INTO %s (name, size, value) values ($1, $2, $3) RETURNING code", productTableName)
-
-	row := tx.QueryRow(createItemQuery, name, size, value)
+	createItemQuery := fmt.Sprintf("INSERT INTO %s (name, size, value, stock_id) values ($1, $2, $3, $4) RETURNING code", productTableName)
+	fmt.Println(createItemQuery, tx)
+	row := tx.QueryRow(createItemQuery, name, size, value, stock_id)
 	err = row.Scan(&productId)
 	if err != nil {
 		tx.Rollback()
@@ -40,7 +41,8 @@ func (r *ProductPSQL) CreateNewProduct(name string, size int, value int) (int, e
 func (r *ProductPSQL) GetProduct(code int) (models.Product, error) {
 	var pr models.Product
 
-	query := fmt.Sprintf(`SELECT code, name, size, value FROM %s where id = $1`, productTableName)
+	query := fmt.Sprintf(`SELECT code, name, size, value FROM %s where code = $1`, productTableName)
+
 	row := r.conn.QueryRow(query, code)
 	err := row.Scan(&pr.Code, &pr.Name, &pr.Size, &pr.Value)
 
@@ -64,7 +66,7 @@ func (r *ProductPSQL) GetProductList() ([]models.Product, error) {
 
 	for rows.Next() {
 		pr := models.Product{}
-		if err = rows.Scan(&pr.Code, &pr.Name, &pr.Size, &pr.Value); err != nil {
+		if err = rows.Scan(&pr.Code, &pr.Name, &pr.Size, &pr.Value, &pr.StockId); err != nil {
 			return nil, err
 		}
 
@@ -74,46 +76,34 @@ func (r *ProductPSQL) GetProductList() ([]models.Product, error) {
 	return prs, nil
 }
 
-func (r *ProductPSQL) GetProductsCountByWarehouseId(stockId string, code int) (int64, error) {
-	var count int64
-	q := `select sum(value) from product g
-			inner join warehouse s on s.id = g.stock_id
-		  where g.stock_id = $1 and s.available`
+func (r *ProductPSQL) GetProductsCountByWarehouseId(stockId int, code int) (int, error) {
+	var count int
+	query := fmt.Sprintf(`select SUM(g.value) from %s as g
+			inner join warehouse as s on s.id = g.stock_id
+		  where g.stock_id = $1 and s.available and code = $2`, productTableName)
 
-	q = q + ` and code::text = $2`
-
-	if err := r.conn.QueryRow(q, stockId, code).Scan(&count); err != nil {
-		log.Fatalf("request execution error: %s query: %s", err, q)
+	if err := r.conn.QueryRow(query, stockId, code).Scan(&count); err != nil {
+		log.Fatalf("request execution error: %s query: %s", err, query)
 		return -1, nil
 	}
-
-	if err := r.conn.QueryRow(q, stockId).Scan(&count); err != nil {
-		log.Fatalf("request execution error: %s query: %s", err, q)
-		return -1, nil
-	}
-
+	fmt.Println(count)
 	return count, nil
 }
 
-func (r *ProductPSQL) ReservationProduct(code int, stockId string, value int64) error {
-	if stockId == "" || value == 0 {
-		return fmt.Errorf("result: code = %d, stock_id = %s, value = %d. must not be equal to code == '' or stock id == '' or value == 0", code, stockId, value)
-	}
+func (r *ProductPSQL) ReservationProduct(code int, stockId int, value int) error {
+	var query string
 
-	var q string
-
-	c, err := r.GetProductsCountByWarehouseId(stockId, code)
+	count, err := r.GetProductsCountByWarehouseId(stockId, code)
 	if err != nil {
 		log.Fatalf("reservation good error. couldn't get value of goods: %s", err)
 		return err
 	}
 
-	if c < value {
+	if count < int(value) {
 		log.Fatal("is not possible to reserve a good because it is not in stock")
 		return errors.New("cannot reserve 0 goods")
 	}
 
-	// Открываем транзакцию. Обновляем значения в goods и res_cen
 	t, err := r.conn.Begin()
 	if err != nil {
 		return err
@@ -130,18 +120,15 @@ func (r *ProductPSQL) ReservationProduct(code int, stockId string, value int64) 
 
 	}(chErr)
 
-	// Вычетаем количество резервируемого товара из таблицы goods
-	q = `update product set value = (value - $1) where code::text = $2 and stock_id = $3`
-	_, err = t.Exec(q, value, code, stockId)
+	query = fmt.Sprintf(`update %s set value = (value - $1) where code = $2 and stock_id = $3`, productTableName)
+	_, err = t.Exec(query, value, code, stockId)
 
 	chErr <- err
 
-	// Создаем новую строку в таблице res_cen
-	q = `insert into res_cen (good_code, stock_id, value) values ($1, $2, $3)`
-	_, err = t.Exec(q, code, stockId, value)
+	query = fmt.Sprintf(`insert into %s (product_code, stock_id, value) values ($1, $2, $3)`, reserveTableName)
+	_, err = t.Exec(query, code, stockId, value)
 
 	chErr <- err
-	// Фиксируем транзакцию, если все окей
 	if err := t.Commit(); err != nil {
 		return err
 	}
@@ -149,25 +136,21 @@ func (r *ProductPSQL) ReservationProduct(code int, stockId string, value int64) 
 	return nil
 }
 
-func (r *ProductPSQL) CancelProductReservation(resId string) error {
-	if resId == "" {
-		return fmt.Errorf("resId is null")
-	}
+func (r *ProductPSQL) CancelProductReservation(resId int) (int, error) {
 
 	t, err := r.conn.Begin()
 	if err != nil {
-		return err
+		return 0, err
 	}
 
-	var q string = `select good_code, value, stock_id::text from res_cen rc where rc.id::text = $1`
+	var query string = fmt.Sprintf(`select product_code, value, stock_id from %s rc where rc.id = $1`, reserveTableName)
 
 	var stock_id string
-	var good_code, res_vl int64
+	var product_code, res_vl int64
 
-	if err = t.QueryRow(q, resId).Scan(&good_code, &res_vl, &stock_id); err != nil {
-		return err
+	if err = t.QueryRow(query, resId).Scan(&product_code, &res_vl, &stock_id); err != nil {
+		return 0, err
 	}
-
 	chErr := make(chan error)
 
 	go func(errs chan error) {
@@ -175,68 +158,15 @@ func (r *ProductPSQL) CancelProductReservation(resId string) error {
 			log.Fatal(err)
 		}
 	}(chErr)
-
-	q = `delete from res_cen where id::text = $1`
-	_, err = t.Exec(q, resId)
-
+	fmt.Println("All good1")
+	query = fmt.Sprintf(`delete from %s where id = $1`, reserveTableName)
+	_, err = t.Exec(query, resId)
+	fmt.Println("All good2")
 	chErr <- err
 
-	q = `update product set value = (select value from product where code = $2) + $1 where code = $2`
-	_, err = t.Exec(q, res_vl, good_code)
+	query = fmt.Sprintf(`update %s set value = (select value from %s where code = $2) + $1 where code = $2`, productTableName, productTableName)
+	_, err = t.Exec(query, res_vl, product_code)
+	fmt.Println("All good3", err)
 
-	chErr <- err
-	if err := t.Commit(); err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (r *ProductPSQL) AddProduct(code int, stockId string, value int64, dynamic bool) error {
-	if stockId == "" || value == 0 {
-		return errors.New("code, id stock or value cannot be empty")
-	}
-
-	var q string
-
-	q = `select available from warehouse where id::text = $1`
-
-	t, err := r.conn.Begin()
-	if err != nil {
-		return err
-	}
-	log.Println("Adding product")
-	var s models.Warehouse
-
-	if err = t.QueryRow(q, stockId).Scan(&s.IsAvailable); err != nil {
-		log.Println(err)
-		return err
-	}
-
-	if s.IsAvailable {
-		q = `update product set value = (select value from product where code::text = $2::text) + $1 where code::text = $2::text and stock_id = $3`
-
-		_, err = t.Exec(q, value, code, stockId)
-	} else {
-		switch dynamic {
-		case true:
-			q = `select s.id from warehouse s
-							inner join product g on g.code::text = $1 and g.stock_id = $2
-						where s.id != $2 and s.available limit 1`
-
-			if err = t.QueryRow(q, code, stockId).Scan(&s.ID); err != nil {
-				return err
-			}
-
-			q = `update product set value = (select value from product where code::text = $2::text) + $1 where stock_id = $3` // TODO: Пофиксить запрос
-
-			_, err = t.Exec(q, value, code, s.ID)
-			return errors.New("failed to add goods to the stock")
-		}
-	}
-
-	if err := t.Commit(); err != nil {
-		return err
-	}
-	return nil
+	return 1, nil
 }

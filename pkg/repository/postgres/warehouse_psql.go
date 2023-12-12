@@ -16,16 +16,16 @@ func NewWarehousePSQL(conn *sql.DB) *WarehosuePSQL {
 	return &WarehosuePSQL{conn: conn}
 }
 
-func (r *WarehosuePSQL) CreateNewWarehouse(s models.Warehouse) (int, error) {
+func (r *WarehosuePSQL) CreateNewWarehouse(name string, available bool) (int, error) {
 	tx, err := r.conn.Begin()
 	if err != nil {
 		return 0, err
 	}
 
 	var warehouseId int
-	createItemQuery := fmt.Sprintf("INSERT INTO %s (name, isavailable ) values ($1, $2) RETURNING id", warehouseTableName)
+	createItemQuery := fmt.Sprintf("INSERT INTO %s (name, available) values ($1, $2) RETURNING id", warehouseTableName)
 
-	row := tx.QueryRow(createItemQuery, s.Name, s.IsAvailable)
+	row := tx.QueryRow(createItemQuery, name, available)
 	err = row.Scan(&warehouseId)
 	if err != nil {
 		tx.Rollback()
