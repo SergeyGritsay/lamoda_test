@@ -23,7 +23,7 @@ func (r *WarehosuePSQL) CreateNewWarehouse(name string, available bool) (int, er
 	}
 
 	var warehouseId int
-	createItemQuery := fmt.Sprintf("INSERT INTO %s (name, isavailable ) values ($1, $2) RETURNING id", warehouseTableName)
+	createItemQuery := fmt.Sprintf("INSERT INTO %s (name, available) values ($1, $2) RETURNING id", warehouseTableName)
 
 	row := tx.QueryRow(createItemQuery, name, available)
 	err = row.Scan(&warehouseId)

@@ -36,35 +36,15 @@ app-up-local: build
 db-bash:
 	docker-compose run --rm --no-deps --name ${APP}-db db ash
 
-db-migrations-create: goose-init
-	if [ -z ${lang} ] ; \
-	then \
-		goose -dir=${MIGRATION_DIR} create ${name} sql ; \
-	else \
-		goose -dir=${MIGRATION_DIR} create ${name} ${lang} ; \
-	fi ;
-
-db-migrate-status: goose-init
-	docker-compose run --rm ${APP} .bin/goose -dir ${MIGRATION_DIR} postgres \
-		"user=${POSTGRES_USER} host=${POSTGRES_HOST} port=${POSTGRES_PORT} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} sslmode=${POSTGRES_SSL}" status
-
-db-migrate-up: goose-init
-	docker-compose run --rm postgres .bin/goose -dir ${MIGRATION_DIR} postgres \
-		"user=${POSTGRES_USER} host=${POSTGRES_HOST} port=${POSTGRES_PORT} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} sslmode=${POSTGRES_SSL}" up
-
-db-migrate-down: goose-init
-	docker-compose run --rm ${APP} .bin/goose -dir ${MIGRATION_DIR} postgres \
-		"user=${POSTGRES_USER} host=${POSTGRES_HOST} port=${POSTGRES_PORT} password=${POSTGRES_PASSWORD} dbname=${POSTGRES_DB} sslmode=${POSTGRES_SSL}" down
-
 package-tidy:
 	go mod tidy
-
-goose-init:
-	go build -o .bin/goose cmd/${MIGRATION_TOOL}/main.go
-	chmod ugo+x .bin/${MIGRATION_TOOL}
 
 db-up:
 	docker-compose run --rm --no-deps --name ${APP}-db db ash
 
 up_migrate:
-	migrate -path .db/migrations -database 'postgres://postgres:qwerty@localhost:5432/warehouse?sslmode=disable' up
+	go install github.com/pressly/goose/v3/cmd/goose@latest
+
+	GOOSE_DRIVER=postgres GOOSE_DBSTRING="user=postgres password=qwerty dbname=warehouse host=0.0.0.0 sslmode=disable" goose -dir ./db/migrations up
+down_migrate:
+	GOOSE_DRIVER=postgres GOOSE_DBSTRING="user=postgres password=qwerty dbname=warehouse host=0.0.0.0 sslmode=disable" goose -dir ./db/migrations down

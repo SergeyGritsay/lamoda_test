@@ -20,20 +20,20 @@ type ProductArgs struct {
 	Code    int
 	Name    string
 	Size    float64
-	Value   int64
+	Value   int
 	StockId int
 	Dynamic bool
-	ResId   string
+	ResId   int
 }
 
 type ReservationArgs struct {
 	Codes   []int
-	Value   []int64
+	Value   []int
 	StockId int
 }
 
 type WarehouseArgs struct {
-	Id        string
+	Id        int
 	Name      string
 	Available bool
 }
@@ -56,7 +56,6 @@ func (s *Service) CreateNewProduct(r *http.Request, args *ProductArgs, response 
 }
 
 func (s *Service) CreateNewWarehouse(r *http.Request, args *WarehouseArgs, response *Response) error {
-	// productRepo := repository.NewRepository(s.db)
 	id, err := s.service.Warehouse.CreateNewWarehouse(args.Name, args.Available)
 	if err != nil {
 		return fmt.Errorf("error when creating a new stock entity in db: %s", err)
@@ -79,11 +78,12 @@ func (s *Service) ReservationProduct(r *http.Request, args *ReservationArgs, res
 }
 
 func (s *Service) CancelProductReservation(r *http.Request, args *ProductArgs, response *Response) error {
-	if err := s.service.Product.CancelProductReservation(args.ResId); err != nil {
+	code, err := s.service.Product.CancelProductReservation(args.ResId)
+	if err != nil {
 		return fmt.Errorf("error when cancel reservation: %s", err)
 	}
 
-	response.Message = "done"
+	response.Message = "done. Code" + strconv.Itoa(code)
 	return nil
 }
 
@@ -114,13 +114,13 @@ func (s *Service) GetProductByCode(r *http.Request, args *ProductArgs, response 
 	return nil
 }
 
-func (s *Service) GetProductssCountByWarehouseId(r *http.Request, args *ProductArgs, response *Response) error {
+func (s *Service) GetProductsCountByWarehouseId(r *http.Request, args *ProductArgs, response *Response) error {
 	count, err := s.service.Product.GetProductsCountByWarehouseId(args.StockId, args.Code)
 	if err != nil {
 		return fmt.Errorf("error when getting goods count by stock id: %s", err)
 	}
 
-	response.Message = string(rune(count))
+	response.Message = strconv.Itoa(count)
 
 	return nil
 }

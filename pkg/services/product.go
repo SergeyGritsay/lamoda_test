@@ -50,7 +50,7 @@ func (p *ProductService) GetProductList() ([]models.Product, error) {
 	return productList, err
 }
 
-func (p *ProductService) GetProductsCountByWarehouseId(stockId int, code int) (int64, error) {
+func (p *ProductService) GetProductsCountByWarehouseId(stockId int, code int) (int, error) {
 	count, err := p.repo.ProductRepository.GetProductsCountByWarehouseId(stockId, code)
 	if err != nil {
 		return 0, err
@@ -59,7 +59,7 @@ func (p *ProductService) GetProductsCountByWarehouseId(stockId int, code int) (i
 	return count, nil
 }
 
-func (p *ProductService) ReservationProducts(code []int, stockId int, value []int64) error {
+func (p *ProductService) ReservationProducts(code []int, stockId int, value []int) error {
 	if len(code) < len(value) || len(value) < len(code) {
 		return errors.New("Missing products or value of products")
 	}
@@ -79,12 +79,12 @@ func (p *ProductService) ReservationProducts(code []int, stockId int, value []in
 	return nil
 }
 
-func (p *ProductService) CancelProductReservation(resId string) error {
-	err := p.repo.ProductRepository.CancelProductReservation(resId)
+func (p *ProductService) CancelProductReservation(resId int) (int, error) {
+	code, err := p.repo.ProductRepository.CancelProductReservation(resId)
 
 	if err != nil {
-		return err
+		return code, err
 	}
 
-	return nil
+	return code, nil
 }

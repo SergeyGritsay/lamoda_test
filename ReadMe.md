@@ -56,10 +56,125 @@
     Будет плюсом:
         - Реализация логики работы с товарами, которые одновременно могут находиться на нескольких складах
 
-## Setup:
-    run make all
+### Setup and Run:
+```bash 
+    make app-setup-and-up
+```
+After build use migration for create db table
+```bash
+    make up_migrate
+```
 
-    after 
+### Описание методов
 
-    goose -dir ./db/migrations/ up
+Создать продукт
+```http request
+http://localhost:4000/rpc [POST]
+```
+```json
+{
+    "method": "Service.CreateNewProduct",
+    "params": [{"Name":"ventil", "Size": 3.5, "Value": 2, "StockId":1}],
+    "id": 2
+}
+```
 
+Answer
+```json
+{"result":{"Message":"the following entities have been created: 1 ventil"},"error":null,"id":2}
+```
+
+Create warehouse
+```http request
+http://localhost:4000/rpc [POST]
+```
+    
+```json
+{
+    "method": "Service.CreateNewWarehouse",
+    "params": [{"Name":"warehouse_1", "Available": true}],
+    "id": 2
+}
+```
+
+Answer
+```json
+    {
+    "result": {
+        "Message": "the following entities have been created:  1warehouse_1 "
+    },
+    "error": null,
+    "id": 2
+    }
+```
+
+Getting count of products in warehouse
+```http request
+http://localhost:4000/rpc [POST]
+```
+    
+```json
+{
+    "method": "Service.GetProductsCountByWarehouseId",
+    "params": [{"StockId":1, "Code": 1}],
+    "id": 2
+}
+```
+
+Answer
+```json
+{
+    "result": {
+        "Message": "2"
+    },
+    "error": null,
+    "id": 2
+}
+```
+
+Reserve product
+```http request
+http://localhost:4000/rpc [POST]
+```
+    
+```json
+{
+    "method": "Service.ReservationProduct",
+    "params": [{"Codes": [1, 2], "StockId":1, "Value": [1, 1]}],
+    "id": 2
+}
+```
+
+Answer
+```json
+{
+    "result": {
+        "Message": "done"
+    },
+    "error": null,
+    "id": 2
+}
+```
+Cancel reserve product
+```http request
+http://localhost:4000/rpc [POST]
+```
+    
+```json
+{
+    "method": "Service.CancelProductReservation",
+    "params": [{"ResId": 1}],
+    "id": 2
+}
+```
+
+Answer
+```json
+{
+    "result": {
+        "Message": "done. Code1"
+    },
+    "error": null,
+    "id": 2
+}
+```

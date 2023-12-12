@@ -23,12 +23,12 @@ type ProductArgs struct {
 	Value   int64
 	StockId int
 	Dynamic bool
-	ResId   string
+	ResId   int
 }
 
 type ReservationArgs struct {
 	Codes   []int
-	Value   []int64
+	Value   []int
 	StockId int
 }
 
@@ -79,11 +79,12 @@ func (h *Handler) ReservationProduct(r *http.Request, args *ReservationArgs, res
 }
 
 func (h *Handler) CancelProductReservation(r *http.Request, args *ProductArgs, response *Response) error {
-	if err := h.services.Product.CancelProductReservation(args.ResId); err != nil {
+	code, err := h.services.Product.CancelProductReservation(args.ResId)
+	if err != nil {
 		return fmt.Errorf("error when cancel reservation: %s", err)
 	}
 
-	response.Message = "done"
+	response.Message = "done. Code: " + strconv.Itoa(code)
 	return nil
 }
 

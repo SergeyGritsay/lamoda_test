@@ -7,13 +7,13 @@ import (
 
 type Product interface {
 	CreateNewProduct(name string, size float64, value int, stock_id int) (int, error)
-	GetProductsCountByWarehouseId(stockId int, code int) (int64, error)
+	GetProductsCountByWarehouseId(stockId int, code int) (int, error)
 
 	GetProductList() ([]models.Product, error)
 	GetProductByCode(code int) (models.Product, error)
 
-	ReservationProducts(code []int, stockId int, value []int64) error
-	CancelProductReservation(resId string) error
+	ReservationProducts(code []int, stockId int, value []int) error
+	CancelProductReservation(resId int) (int, error)
 }
 
 type Warehouse interface {

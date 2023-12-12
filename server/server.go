@@ -13,7 +13,6 @@ import (
 
 type Service struct {
 	service *services.Service
-	// ctx context.Context
 }
 
 func NewService(service *services.Service) *Service {
@@ -25,9 +24,7 @@ func NewService(service *services.Service) *Service {
 func RunJRPC(db *sql.DB, port string) {
 	s := rpc.NewServer()
 	log.Println("run server")
-	// ctx := context.Background()
-	// services := NewService(delivery.NewHandler(services.NewService(repository.NewRepository(db))))
-	// ProductService := delivery.NewHandler(services.NewService(repository.NewRepository(services.db)))
+
 	s.RegisterCodec(json.NewCodec(), "application/json")
 	s.RegisterService(NewService(services.NewService(repository.NewRepository(db))), "")
 	log.Println("register service")
